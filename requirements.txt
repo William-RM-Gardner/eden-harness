@@ -1,0 +1,6 @@
+# Verified working combination (12 Aug 2026, Windows, Python 3.14.3):
+#   openai 3.0.0 · python-dotenv 1.2.2
+# The 3.x SDK keeps chat.completions.create and the tool-call response shape
+# unchanged from 1.x, so the driver in models.py works on either.
+openai>=1.40
+python-dotenv>=1.0
