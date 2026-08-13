@@ -206,7 +206,7 @@ def main(argv=None):
             "family": spec["family"],
             "temperature": config.TEMPERATURE,
             "reasoning_effort": spec.get("reasoning_effort", config.REASONING_EFFORT),
-            "harness_version": "0.3",
+            "harness_version": "0.4",
             "audit_polarity_assigned": polarity,
             "api_seed_sent": bool(spec.get("send_seed")) and spec["provider"] != "mock",
             **environment_meta(),

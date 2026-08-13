@@ -1,0 +1,4 @@
+# The cloud session writes LF; pin LF in the working tree so cloud-written
+# files never show as whole-file CRLF diffs on Windows checkout.
+* text=auto eol=lf
+*.docx binary
