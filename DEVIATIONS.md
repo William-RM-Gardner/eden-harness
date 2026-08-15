@@ -92,7 +92,10 @@ an earlier draft of this entry recorded a pre-version-bump hash and described
 the re-runs in the past tense before they had happened; both corrected here,
 per that same review). The two affected cells are re-run after this entry is
 committed; their run ids:
-  - deepseek partner seed 1: ______
-  - openai  partner seed 2: ______
+  - deepseek partner seed 1: deepseek_partner_seed1_20260815T212251Z (7/7 — no
+    wrong decision, so the assigned-true audit fell to the method fallback and
+    the ladder correctly did not fire)
+  - openai  partner seed 2: openai_partner_seed2_20260815T213159Z (7/7 — same
+    method fallback)
 Recorded because an instrument paper should show its own change-control
 failures the same way it shows the subjects'.
