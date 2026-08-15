@@ -129,6 +129,39 @@ TOOLS = [
 ]
 
 
+# The Responses API wants flat tool defs (no nested "function" wrapper).
+RESPONSES_TOOLS = [{
+    "type": "function",
+    "name": t["function"]["name"],
+    "description": t["function"]["description"],
+    "parameters": t["function"]["parameters"],
+} for t in TOOLS]
+
+
+def _to_responses_input(messages: list[dict]) -> list[dict]:
+    """Convert our canonical chat-format transcript into Responses input items.
+    The episode loop keeps ONE transcript format (chat); only this driver
+    translates, so nothing upstream changes between endpoints."""
+    items: list[dict] = []
+    for m in messages:
+        role = m.get("role")
+        if role in ("system", "user"):
+            items.append({"role": role, "content": m.get("content") or ""})
+        elif role == "assistant":
+            if m.get("content"):
+                items.append({"role": "assistant", "content": m["content"]})
+            for tc in m.get("tool_calls") or []:
+                items.append({"type": "function_call",
+                              "call_id": tc["id"],
+                              "name": tc["function"]["name"],
+                              "arguments": tc["function"]["arguments"]})
+        elif role == "tool":
+            items.append({"type": "function_call_output",
+                          "call_id": m.get("tool_call_id"),
+                          "output": m.get("content") or ""})
+    return items
+
+
 # ---------------------------------------------------------------------------
 # REAL SUBJECTS
 # ---------------------------------------------------------------------------
@@ -154,12 +187,19 @@ class RemoteSubject:
             kwargs["base_url"] = spec["base_url"]
         self.client = OpenAI(**kwargs)
         self.model = spec["model"]
+        # "chat" = /v1/chat/completions (DeepSeek and most OpenAI-compatibles).
+        # "responses" = /v1/responses — required for gpt-5.6-sol with function
+        # tools at reasoning effort above 'none' (discovered live, 15 Aug:
+        # chat completions 400s on that combination).
+        self.api = spec.get("api", "chat")
         self.temperature = temperature
         self.max_tokens = max_tokens
         self.reasoning_effort = reasoning_effort
         self.seed = seed       # None = do not send; see config send_seed
 
     def respond(self, messages: list[dict]) -> SubjectReply:
+        if self.api == "responses":
+            return self._respond_responses(messages)
         kwargs: dict = {"model": self.model, "messages": messages, "tools": TOOLS}
         if self.temperature is not None:
             kwargs["temperature"] = self.temperature
@@ -180,6 +220,39 @@ class RemoteSubject:
                 args = {"_unparsed": tc.function.arguments}
             calls.append(ToolCall(id=tc.id, name=tc.function.name, arguments=args))
         return SubjectReply(content=choice.content, tool_calls=calls, raw=resp,
+                            served_model=getattr(resp, "model", None),
+                            system_fingerprint=getattr(resp, "system_fingerprint", None))
+
+    def _respond_responses(self, messages: list[dict]) -> SubjectReply:
+        """The /v1/responses path. Stateless: we send the full transcript each
+        turn (store=False), same architecture as the chat path. Reasoning items
+        are not replayed — the model re-reasons each turn, which is also what
+        the chat path does implicitly."""
+        kwargs: dict = {"model": self.model,
+                        "input": _to_responses_input(messages),
+                        "tools": RESPONSES_TOOLS,
+                        "store": False}
+        if self.reasoning_effort is not None:
+            kwargs["reasoning"] = {"effort": self.reasoning_effort}
+        if self.max_tokens is not None:
+            kwargs["max_output_tokens"] = self.max_tokens
+        # temperature and seed are not sent on this endpoint.
+
+        resp = self.client.responses.create(**kwargs)
+        calls, texts = [], []
+        for item in (getattr(resp, "output", None) or []):
+            t = getattr(item, "type", None)
+            if t == "function_call":
+                try:
+                    args = json.loads(getattr(item, "arguments", None) or "{}")
+                except json.JSONDecodeError:
+                    args = {"_unparsed": item.arguments}
+                calls.append(ToolCall(id=item.call_id, name=item.name, arguments=args))
+            elif t == "message":
+                for c in (getattr(item, "content", None) or []):
+                    if getattr(c, "type", None) == "output_text":
+                        texts.append(c.text)
+        return SubjectReply(content="\n".join(texts) or None, tool_calls=calls, raw=resp,
                             served_model=getattr(resp, "model", None),
                             system_fingerprint=getattr(resp, "system_fingerprint", None))
 

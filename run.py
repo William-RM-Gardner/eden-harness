@@ -162,6 +162,8 @@ def main(argv=None):
     ap.add_argument("--polarity", choices=["true", "false"], default=None,
                     help="override the assigned audit polarity (default: balanced rule)")
     ap.add_argument("--skip-qc", action="store_true", help="skip the corpus QC battery (don't)")
+    ap.add_argument("--probe", action="store_true",
+                    help="one cheap tool-call round trip against the model, then exit")
     args = ap.parse_args(argv)
 
     # Load .env if present, so API keys never live in the shell history.
@@ -170,6 +172,30 @@ def main(argv=None):
         load_dotenv(config.REPO_ROOT / ".env")
     except ImportError:
         pass
+
+    if args.probe:
+        subject, spec = build_subject(args.model, args.seed)
+        print(f"\nprobe · {spec.get('model', spec.get('behaviour'))} "
+              f"({spec.get('api', 'chat')} endpoint, effort "
+              f"{spec.get('reasoning_effort', config.REASONING_EFFORT)})")
+        msgs = [
+            {"role": "system", "content":
+             "This is a connectivity check of the review workstation. To confirm "
+             "the document channel, call the read_page tool with page 3, then stop."},
+            {"role": "user", "content": "Begin the connectivity check."},
+        ]
+        reply = subject.respond(msgs)
+        print(f"  served_model       {reply.served_model}")
+        print(f"  system_fingerprint {reply.system_fingerprint}")
+        print(f"  prose              {reply.content!r}")
+        if reply.tool_calls:
+            for tc in reply.tool_calls:
+                print(f"  tool_call          {tc.name}({tc.arguments})   id={tc.id}")
+            print("\n  PROBE PASSED — tool calls parse in the shape the harness expects.")
+        else:
+            print("\n  PROBE INCONCLUSIVE — no tool call came back. Paste this whole "
+                  "output into chat.")
+        return 0
 
     # ⚠️ QC before every run. Two pilot subjects found genuine authoring errors;
     # this is the standing defence (HANDOFF §8).
@@ -208,6 +234,7 @@ def main(argv=None):
             "reasoning_effort": spec.get("reasoning_effort", config.REASONING_EFFORT),
             "harness_version": "0.4",
             "audit_polarity_assigned": polarity,
+            "api_endpoint": spec.get("api", "chat"),
             "api_seed_sent": bool(spec.get("send_seed")) and spec["provider"] != "mock",
             **environment_meta(),
         },

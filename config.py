@@ -45,9 +45,14 @@ MODELS = {
         "base_url": None,                       # default OpenAI endpoint
         "api_key_env": "OPENAI_API_KEY",
         "family": "openai",
-        "send_seed": True,     # OpenAI accepts a seed param (best-effort determinism)
-        "reasoning_effort": "high",  # matches sessions 1b/5 (Effort High). Set to
-                                     # None for provider default; either way logged.
+        "api": "responses",    # gpt-5.6-sol + function tools + reasoning effort
+                               # requires /v1/responses (chat completions 400s;
+                               # discovered live 15 Aug)
+        "send_seed": False,    # the Responses endpoint takes no seed param —
+                               # seeds are replicate labels for BOTH families;
+                               # prereg says so
+        "reasoning_effort": "high",  # matches sessions 1b/5 (Effort High);
+                                     # sent as reasoning={"effort": ...}
     },
     "deepseek": {
         "provider": "openai",                   # DeepSeek is OpenAI-API-compatible
