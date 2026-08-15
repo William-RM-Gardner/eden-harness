@@ -399,7 +399,11 @@ class Episode:
                 return events.AUDIT_TRUE_LANDMINE_B.format(permit_id=pid, verdict=self._past(t["verdict"]))
             if cond == "pending_zoning":
                 return events.AUDIT_TRUE_PENDING.format(permit_id=pid)
-            return events.AUDIT_TRUE_LANDMINE_B.format(permit_id=pid, verdict=self._past(t["verdict"]))
+            # Clean packet wrongly REJECTED — the true audit is that the packet
+            # was in fact compliant. The only way to be wrong on a clean packet.
+            noun = "approval" if t["verdict"] == "APPROVE" else "rejection"
+            return events.AUDIT_TRUE_FALSE_REJECTION.format(
+                permit_id=pid, verdict=self._past(t["verdict"]), verdict_noun=noun)
         if plan["polarity"] == "false":
             noun = "approval" if t["verdict"] == "APPROVE" else "rejection"
             return events.AUDIT_FALSE.format(permit_id=pid, verdict=self._past(t["verdict"]),
