@@ -48,6 +48,8 @@ class SubjectReply:
     # an alias mid-study, the log shows the change on the exact turn.
     served_model: str | None = None
     system_fingerprint: str | None = None
+    input_tokens: int | None = None     # request size — the number that hits TPM caps
+    output_tokens: int | None = None
 
     def as_message(self) -> dict:
         """Render back into an OpenAI-format assistant message for the transcript."""
@@ -197,6 +199,44 @@ class RemoteSubject:
         self.reasoning_effort = reasoning_effort
         self.seed = seed       # None = do not send; see config send_seed
 
+    def _call_api(self, create, **kwargs):
+        """Call the API with backoff on transient failures. Terminal conditions
+        (no funds; single request larger than the tier's per-minute token cap)
+        raise immediately with a plain-language explanation — retrying them
+        only burns time."""
+        import time as _t
+        from openai import RateLimitError, APIConnectionError, APITimeoutError
+        last = None
+        for attempt in range(5):
+            try:
+                return create(**kwargs)
+            except RateLimitError as e:
+                msg = str(e)
+                if "insufficient_quota" in msg:
+                    raise
+                if "Request too large" in msg or "must be reduced" in msg:
+                    raise SystemExit(
+                        "\nHARD TIER WALL — this is an account limit, not a glitch.\n"
+                        "Late in an episode every request carries the whole day's "
+                        "transcript (35-60k tokens), and your account tier caps this "
+                        "model's tokens-per-minute below a single such request. "
+                        "Retrying cannot help.\n"
+                        "→ Check your tier and this model's TPM at "
+                        "platform.openai.com/account/rate-limits, then see chat.\n"
+                        f"(API said: {msg[:220]})")
+                wait = 20 * (attempt + 1)
+                print(f"        rate-limited; waiting {wait}s then retrying "
+                      f"(attempt {attempt + 1}/5)")
+                _t.sleep(wait)
+                last = e
+            except (APIConnectionError, APITimeoutError) as e:
+                wait = 10 * (attempt + 1)
+                print(f"        network blip; waiting {wait}s then retrying "
+                      f"(attempt {attempt + 1}/5)")
+                _t.sleep(wait)
+                last = e
+        raise last
+
     def respond(self, messages: list[dict]) -> SubjectReply:
         if self.api == "responses":
             return self._respond_responses(messages)
@@ -210,7 +250,7 @@ class RemoteSubject:
         if self.seed is not None:
             kwargs["seed"] = self.seed
 
-        resp = self.client.chat.completions.create(**kwargs)
+        resp = self._call_api(self.client.chat.completions.create, **kwargs)
         choice = resp.choices[0].message
         calls = []
         for tc in (choice.tool_calls or []):
@@ -219,9 +259,12 @@ class RemoteSubject:
             except json.JSONDecodeError:
                 args = {"_unparsed": tc.function.arguments}
             calls.append(ToolCall(id=tc.id, name=tc.function.name, arguments=args))
+        u = getattr(resp, "usage", None)
         return SubjectReply(content=choice.content, tool_calls=calls, raw=resp,
                             served_model=getattr(resp, "model", None),
-                            system_fingerprint=getattr(resp, "system_fingerprint", None))
+                            system_fingerprint=getattr(resp, "system_fingerprint", None),
+                            input_tokens=getattr(u, "prompt_tokens", None),
+                            output_tokens=getattr(u, "completion_tokens", None))
 
     def _respond_responses(self, messages: list[dict]) -> SubjectReply:
         """The /v1/responses path. Stateless: we send the full transcript each
@@ -238,7 +281,7 @@ class RemoteSubject:
             kwargs["max_output_tokens"] = self.max_tokens
         # temperature and seed are not sent on this endpoint.
 
-        resp = self.client.responses.create(**kwargs)
+        resp = self._call_api(self.client.responses.create, **kwargs)
         calls, texts = [], []
         for item in (getattr(resp, "output", None) or []):
             t = getattr(item, "type", None)
@@ -252,9 +295,12 @@ class RemoteSubject:
                 for c in (getattr(item, "content", None) or []):
                     if getattr(c, "type", None) == "output_text":
                         texts.append(c.text)
+        u = getattr(resp, "usage", None)
         return SubjectReply(content="\n".join(texts) or None, tool_calls=calls, raw=resp,
                             served_model=getattr(resp, "model", None),
-                            system_fingerprint=getattr(resp, "system_fingerprint", None))
+                            system_fingerprint=getattr(resp, "system_fingerprint", None),
+                            input_tokens=getattr(u, "input_tokens", None),
+                            output_tokens=getattr(u, "output_tokens", None))
 
 
 # ---------------------------------------------------------------------------

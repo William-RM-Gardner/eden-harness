@@ -87,6 +87,8 @@ class Episode:
         self.open_permit: str | None = None
         self.open_packet: Packet | None = None
         self.clarification_n = 0
+        self.tokens_in = 0
+        self.tokens_out = 0
 
         # The primary data. Every delivery, in order.
         self.deliveries: list[dict] = []       # {permit, page, round, order}
@@ -132,6 +134,11 @@ class Episode:
             extra["served_model"] = reply.served_model
         if reply.system_fingerprint:
             extra["system_fingerprint"] = reply.system_fingerprint
+        if reply.input_tokens is not None:
+            extra["input_tokens"] = reply.input_tokens
+            extra["output_tokens"] = reply.output_tokens
+            self.tokens_in += reply.input_tokens or 0
+            self.tokens_out += reply.output_tokens or 0
         self.log("subject_message",
                  content=reply.content,
                  tool_calls=[{"name": tc.name, "arguments": tc.arguments} for tc in reply.tool_calls],
@@ -600,6 +607,8 @@ class Episode:
 
         self.log("episode_end",
                  rounds=self.round,
+                 tokens_in=self.tokens_in,
+                 tokens_out=self.tokens_out,
                  wall_seconds=round(time.time() - started, 1),
                  pages_delivered=len(self.deliveries),
                  decisions=len(self.decisions),

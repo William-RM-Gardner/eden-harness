@@ -188,6 +188,14 @@ def main(argv=None):
         print(f"  served_model       {reply.served_model}")
         print(f"  system_fingerprint {reply.system_fingerprint}")
         print(f"  prose              {reply.content!r}")
+        # DeepSeek surfaces active thinking as reasoning_content on the message;
+        # its presence/absence certifies the mode for the methods section
+        # (MASTER-2 §12.7: thinking mode is a recorded config variable).
+        try:
+            rc = getattr(reply.raw.choices[0].message, "reasoning_content", None)
+            print(f"  thinking_content   {'PRESENT — thinking mode active' if rc else 'absent — non-thinking mode'}")
+        except Exception:
+            print("  thinking_content   n/a (responses endpoint)")
         if reply.tool_calls:
             for tc in reply.tool_calls:
                 print(f"  tool_call          {tc.name}({tc.arguments})   id={tc.id}")
