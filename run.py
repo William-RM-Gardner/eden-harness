@@ -203,6 +203,31 @@ def main(argv=None):
         else:
             print("\n  PROBE INCONCLUSIVE — no tool call came back. Paste this whole "
                   "output into chat.")
+
+        # Rate-limit facts straight from the API headers — no dashboard page
+        # needed. x-ratelimit-limit-tokens is the TPM cap that decides whether
+        # a full episode (35-60k-token late requests) can run on this account.
+        if hasattr(subject, "client"):
+            try:
+                if spec.get("api") == "responses":
+                    raw = subject.client.responses.with_raw_response.create(
+                        model=spec["model"], input="Reply with the single word: ok",
+                        store=False)
+                else:
+                    raw = subject.client.chat.completions.with_raw_response.create(
+                        model=spec["model"],
+                        messages=[{"role": "user", "content": "Reply with the single word: ok"}])
+                print("\n  account limits for this model (from response headers):")
+                for k in ("x-ratelimit-limit-requests", "x-ratelimit-remaining-requests",
+                          "x-ratelimit-limit-tokens", "x-ratelimit-remaining-tokens",
+                          "x-ratelimit-reset-tokens"):
+                    v = raw.headers.get(k)
+                    if v:
+                        print(f"    {k:<34} {v}")
+                if not raw.headers.get("x-ratelimit-limit-tokens"):
+                    print("    (provider sent no rate-limit headers)")
+            except Exception as e:
+                print(f"\n  (header check failed: {str(e)[:160]})")
         return 0
 
     # ⚠️ QC before every run. Two pilot subjects found genuine authoring errors;
