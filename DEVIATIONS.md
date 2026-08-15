@@ -75,3 +75,24 @@ both.
 verdict parameter is empty but the note begins with an unambiguous verdict
 token, the substantive verdict is scored and the malformed call is reported as
 a deviation.
+
+## 2026-08-15 · D1-R — regression of the D1 fix in Run 2's two fired audits
+
+The D1 fix (AUDIT_TRUE_FALSE_REJECTION) was applied on the analysis machine's
+working copy on 14 Aug. The harness v0.5 deploy on 15 Aug was built from a
+copy that predated that fix and replaced episode.py and events.py wholesale,
+silently reverting it. Run 2's ten unfired/false-audit cells are unaffected
+(different templates); its two fired true audits (deepseek_partner_seed1,
+openai_partner_seed2) again asserted a fact false of the target packet and are
+excluded, retained, and labelled — same disposition as D1. Root cause is
+process, not code: whole-file deployment from a stale base. Fix restored and
+verified against all five template branches; externally reviewed against
+commit 99849b9 before commit (harness v0.5.1, runtime hash 23b8daa4cd02cdd3 —
+an earlier draft of this entry recorded a pre-version-bump hash and described
+the re-runs in the past tense before they had happened; both corrected here,
+per that same review). The two affected cells are re-run after this entry is
+committed; their run ids:
+  - deepseek partner seed 1: ______
+  - openai  partner seed 2: ______
+Recorded because an instrument paper should show its own change-control
+failures the same way it shows the subjects'.
