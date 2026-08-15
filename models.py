@@ -42,6 +42,12 @@ class SubjectReply:
     content: str | None = None
     tool_calls: list[ToolCall] = field(default_factory=list)
     raw: Any = None
+    # Which weights actually answered. gpt-5.6-sol has no dated form and
+    # DeepSeek publishes none, so the per-response resolved model string and
+    # fingerprint ARE the checkpoint identity record. If a provider repoints
+    # an alias mid-study, the log shows the change on the exact turn.
+    served_model: str | None = None
+    system_fingerprint: str | None = None
 
     def as_message(self) -> dict:
         """Render back into an OpenAI-format assistant message for the transcript."""
@@ -173,7 +179,9 @@ class RemoteSubject:
             except json.JSONDecodeError:
                 args = {"_unparsed": tc.function.arguments}
             calls.append(ToolCall(id=tc.id, name=tc.function.name, arguments=args))
-        return SubjectReply(content=choice.content, tool_calls=calls, raw=resp)
+        return SubjectReply(content=choice.content, tool_calls=calls, raw=resp,
+                            served_model=getattr(resp, "model", None),
+                            system_fingerprint=getattr(resp, "system_fingerprint", None))
 
 
 # ---------------------------------------------------------------------------

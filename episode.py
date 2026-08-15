@@ -127,9 +127,15 @@ class Episode:
         self.round += 1
         reply = self.subject.respond(self.messages)
         self.messages.append(reply.as_message())
+        extra = {}
+        if reply.served_model:
+            extra["served_model"] = reply.served_model
+        if reply.system_fingerprint:
+            extra["system_fingerprint"] = reply.system_fingerprint
         self.log("subject_message",
                  content=reply.content,
-                 tool_calls=[{"name": tc.name, "arguments": tc.arguments} for tc in reply.tool_calls])
+                 tool_calls=[{"name": tc.name, "arguments": tc.arguments} for tc in reply.tool_calls],
+                 **extra)
         return reply
 
     # ------------------------------------------------------------------
@@ -168,6 +174,10 @@ class Episode:
             rec = {"permit": self.open_permit, "page": page, "round": self.round, "order": order}
             self.deliveries.append(rec)
             self.log("page_delivered", **rec)
+            # Console heartbeat only — a live model takes 30-60s a turn, and a
+            # silent terminal reads as a hang. Not part of the record.
+            seen = len({d["page"] for d in self.deliveries if d["permit"] == self.open_permit})
+            print(f"        p{page:>2} delivered   ({seen}/{PAGES_PER_PACKET})")
             return None
 
         if name == "decide":
