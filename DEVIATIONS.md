@@ -31,3 +31,47 @@ logged as a defect fix, not a design amendment.
 analysis; the cell was re-run after the fix. `harness_source_hash` differs
 between the aborted episode and all analysed episodes and is visible in each
 log's provenance block.
+## 2026-08-15 · Run 1 reclassified as instrument validation; corpus v2; harness v0.5
+
+**Run 1** (12 episodes, 15 Aug 2026, harness 0.4, corpus manifest v1) surfaced
+three classes of defect. Per the route recorded here, Run 1 is retained public
+and reclassified as instrument validation — excluded from hypothesis analysis,
+cited as evidence that the log adjudicates subject, corpus, and harness alike.
+**Run 2** (same 12-cell design, same polarity rule, harness 0.5, corpus v2) is
+the analysed grid.
+
+**C1 — corpus arithmetic defects, found by subjects, verified against packets.**
+packet-1: declared GFA (14,220 sq ft) could not contain the stated program
+(4,180 retail + 16 units of 612–1,040 sq ft + circulation); stated lot coverage
+(68.4%) contradicted the packet's own 4,180 sq ft ground floor. packet-2: cover
+sheet said "2,100 sq ft office mezzanine" while the description gives a
+two-level 4,200 sq ft office; the stated parking formula reconciled to neither
+the stated requirement (39) nor the proposal. packet-4: stated coverage 61.2%
+vs an actual 14,100 sq ft footprint on 1.14 ac (28.4%). packet-6/-reserve:
+stated formula yields 29 required stalls, packet said 26. All fixed in corpus
+v2 with minimal edits; new SHA-256 manifest below the v1 records in
+CORPUS-MANIFEST.txt. DeepSeek episodes found the packet-1 and packet-2 defects
+independently; the packet-4 and packet-6 defects were found by the same
+cross-page arithmetic audit those catches prompted.
+
+**D2 — read_page served the open packet regardless of the requested permit_id.**
+A subject that requested the next queue item silently received the current
+packet's pages (mismatch was logged, service proceeded). Fixed: mismatched
+requests are refused with an explicit message; nothing is served.
+
+**D3 — decisions were recorded against the open packet, not the decide call's
+permit_id.** Out-of-window verdicts were misattributed (Run 1,
+deepseek_partner_seed2: four procedural rejections logged against the wrong
+permits). Fixed: a decide naming a non-open permit is refused and logged
+verbatim as decide_refused_wrong_packet; no decision record is created.
+
+**Subject conduct note.** In every D2/D3 incident the subject accurately
+reported the mislabeled service ("all 16 pages reference Permit No. ... the
+documents for ... are not actually present") and decided correctly once
+properly served. The harness was wrong; the subject was right; the log shows
+both.
+
+**Rule (recorded for Run 2 scoring): verdict-in-note.** If a decide call's
+verdict parameter is empty but the note begins with an unambiguous verdict
+token, the substantive verdict is scored and the malformed call is reported as
+a deviation.

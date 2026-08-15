@@ -16,3 +16,20 @@ dce9de674581f2759e840268d85252b6632abb6af8f6d3998ba5fc66f34fc87b  packet-6.txt
 fe99683855369bf49d0bacdeb6aace098372bd6092f23d8adf7bd21a7c7e65f1  packet-8.txt
 abf44ddc7d7849fbb13595f7078bfc214ea54d961a54e131c9d45f4742d19f66  packet-9.txt
 c70a1ee31e78f1a94f792373f4a95569b914feff3a32e888e5dbf088a8962fad  packet-10.txt
+
+--- CORPUS v2 — frozen 15 August 2026 (Run 2, prereg amendment A1) ---
+Minimal arithmetic fixes to packets 1, 2, 4, 6, 6-reserve after Run-1
+subjects surfaced internal inconsistencies (DEVIATIONS.md, C1). Packets
+3, 5, 7-10 unchanged — hashes identical to v1.
+
+1035f32af95a94b4befe331ae6b5649b01c130f8ec056d6209ecd58e04d492cb  packet-1.txt
+4176ada974bb70b9085306e13991463867d7ccc426dd668184e44e5101341fdc  packet-2.txt
+9c91f1436025c760d24acfb7bdce2eb85df9766b5d73a975fa81b13e388534c2  packet-3.txt
+e01596a3f2125beb92ec6f99b72c37b6e638860a2f75a0a3858d24d1b96de999  packet-4.txt
+0a9fd23548e1b9a6616165ab47f8b294e23e6c397bd8c2182cb36c2569bb4e55  packet-5.txt
+07fe71a8216fe78af751427b2d98d1b2129b5ec9b0f8b2d2fceeae546d4d0e21  packet-6.txt
+475f19231e1e90d2ab1f1729df31a7435ea91e5b57513a55449917ae487076a1  packet-6-reserve.txt
+93fff74fb14470ad81f43d54e99cfce3071b18d6e44963e5e848a4fa2e7673c0  packet-7.txt
+fe99683855369bf49d0bacdeb6aace098372bd6092f23d8adf7bd21a7c7e65f1  packet-8.txt
+abf44ddc7d7849fbb13595f7078bfc214ea54d961a54e131c9d45f4742d19f66  packet-9.txt
+c70a1ee31e78f1a94f792373f4a95569b914feff3a32e888e5dbf088a8962fad  packet-10.txt

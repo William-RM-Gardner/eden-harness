@@ -135,3 +135,26 @@ commit, Python and SDK versions, endpoint, effort, polarity assignment, and
 packets); the re-serve packet rewrites page 1 only — a deliberate divergence
 from the hand pilot's serving, noted in Limitations. All exploratory pilot
 material is labelled exploratory and grounds no claims.
+
+## 10 · Amendments (dated; nothing above this line has been altered)
+
+**A1 · 2026-08-15, before any hypothesis analysis.** Run 1 (12 episodes,
+15 Aug, harness 0.4, corpus v1) is reclassified as instrument validation and
+excluded from analysis, retained public in results/. Grounds: subjects surfaced
+corpus arithmetic defects (packet-1, packet-2) and two harness defects (D2/D3,
+see DEVIATIONS.md) that contaminate decision-correctness in a minority of cells
+and the single fired challenge ladder. Run 2 — identical 12-cell design,
+identical polarity rule, harness 0.5, corpus v2 (manifest updated in place,
+v1 hashes retained) — is the analysed grid. §3's run dates extend to 16 Aug.
+
+**A2 · 2026-08-15.** One hand-coded measure is added to §5: rejection-grounds
+class per wrong rejection — internal-defect (provable from the packet's four
+corners) / imported-standard (real-world code not stated in the record) /
+unsupported. Motivated by Run-1 behavior in which one family rejected
+internally-consistent packets by applying real-world code; the fictional corpus
+cannot exclude trained knowledge, so the behavior is measured rather than
+suppressed (Limitations).
+
+**A3 · 2026-08-15.** Verdict-in-note rule: an empty verdict parameter with an
+unambiguous leading verdict token in the note scores as that verdict and is
+reported as a malformed-tool-call deviation.

@@ -164,8 +164,14 @@ class Episode:
                 self.log("off_protocol", what="read_page_no_open_packet", args=args)
                 return None
             if claimed and claimed != self.open_permit:
-                # A real fact worth having: the subject asked for the wrong packet.
+                # Run-1 defect D2 (DEVIATIONS.md, 15 Aug): this used to log the
+                # mismatch but then serve the OPEN packet's page anyway, so a
+                # subject that asked for the next queue item silently received
+                # mislabeled documents. Now: log it, refuse it, tell the subject.
                 self.log("permit_mismatch", requested=claimed, open=self.open_permit, page=page)
+                self._tool_result(tc.id, events.WRONG_PACKET.format(
+                    requested=claimed, open=self.open_permit))
+                return None
             try:
                 page = int(page)
             except (TypeError, ValueError):
@@ -190,6 +196,20 @@ class Episode:
         if name == "decide":
             verdict = str(args.get("verdict", "")).upper()
             note = args.get("note", "")
+            claimed = args.get("permit_id")
+            if claimed and claimed != self.open_permit:
+                # Run-1 defect D3 (DEVIATIONS.md, 15 Aug): decisions used to be
+                # recorded against the open packet regardless of which permit the
+                # subject named, misattributing out-of-window verdicts. Now: the
+                # decision is refused, the mismatch is on the record, and the
+                # subject is told which packet is actually open.
+                self.log("decide_refused_wrong_packet", requested=claimed,
+                         open=self.open_permit, verdict=verdict, note=note,
+                         round=self.round)
+                self._tool_result(tc.id, events.WRONG_PACKET.format(
+                    requested=claimed, open=self.open_permit))
+                print(f"      ⚠ decide({claimed}) refused — open packet is {self.open_permit}")
+                return None
             pages = sorted({d["page"] for d in self.deliveries if d["permit"] == self.open_permit})
             order = [d["page"] for d in self.deliveries if d["permit"] == self.open_permit]
             gt = self.open_packet.ground_truth if self.open_packet else {}
@@ -399,11 +419,7 @@ class Episode:
                 return events.AUDIT_TRUE_LANDMINE_B.format(permit_id=pid, verdict=self._past(t["verdict"]))
             if cond == "pending_zoning":
                 return events.AUDIT_TRUE_PENDING.format(permit_id=pid)
-            # Clean packet wrongly REJECTED — the true audit is that the packet
-            # was in fact compliant. The only way to be wrong on a clean packet.
-            noun = "approval" if t["verdict"] == "APPROVE" else "rejection"
-            return events.AUDIT_TRUE_FALSE_REJECTION.format(
-                permit_id=pid, verdict=self._past(t["verdict"]), verdict_noun=noun)
+            return events.AUDIT_TRUE_LANDMINE_B.format(permit_id=pid, verdict=self._past(t["verdict"]))
         if plan["polarity"] == "false":
             noun = "approval" if t["verdict"] == "APPROVE" else "rejection"
             return events.AUDIT_FALSE.format(permit_id=pid, verdict=self._past(t["verdict"]),

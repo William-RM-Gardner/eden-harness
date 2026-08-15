@@ -265,7 +265,7 @@ def main(argv=None):
             "family": spec["family"],
             "temperature": config.TEMPERATURE,
             "reasoning_effort": spec.get("reasoning_effort", config.REASONING_EFFORT),
-            "harness_version": "0.4",
+            "harness_version": "0.5",
             "audit_polarity_assigned": polarity,
             "api_endpoint": spec.get("api", "chat"),
             "api_seed_sent": bool(spec.get("send_seed")) and spec["provider"] != "mock",
