@@ -22,6 +22,15 @@ $env:PYTHONIOENCODING = 'utf-8'
 # transcript file is readable instead of mojibake.
 [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
 
+# Use the venv Python by full path so the script works no matter which shell
+# launches it, activated or not. Bare 'py' is the system Python, which has no
+# openai package - that is exactly how the first launch of the night failed.
+$python = "C:\Users\willi\eden-venv\Scripts\python.exe"
+if (-not (Test-Path $python)) {
+    Write-Host "venv python not found at $python - aborting before any API call." -ForegroundColor Red
+    exit 1
+}
+
 function Invoke-GitSync([string]$msg) {
     # A stale index.lock (VS Code git integration, Dropbox sync, an interrupted
     # command) would silently break every commit for the rest of the night.
@@ -59,7 +68,7 @@ foreach ($c in $cells) {
     Write-Host "=== [$i/$($cells.Count)] $label ===" -ForegroundColor Cyan
     Write-Host ""
 
-    py run.py --model $($c.m) --arm $($c.arm) --seed $($c.seed) 2>&1 |
+    & $python run.py --model $($c.m) --arm $($c.arm) --seed $($c.seed) 2>&1 |
         Tee-Object -Append -FilePath "run-all-output.txt"
 
     Invoke-GitSync "episode: $label"
