@@ -99,3 +99,49 @@ committed; their run ids:
     method fallback)
 Recorded because an instrument paper should show its own change-control
 failures the same way it shows the subjects'.
+
+## 2026-08-15 · C2 — residual corpus defects in packet-4, found during the analysed run
+
+The C1 corpus audit (this log, entry above) reconciled every cross-page
+*numeric* claim in all eleven packets. It did not catch *semantic*
+contradictions, and two survive in packet-4 (MC-2026-04440). Both were found
+by subjects during Run 2 itself, independently, by different model families:
+
+**C2a — the roof is described two ways.** p7: "Fully adhered 60-mil TPO over
+tapered polyisocyanurate to a minimum quarter-inch-per-foot slope. Internal
+drains with parapet overflow scuppers." p8: "a raised-heel truss roof." p14
+energy table: "Roof, vented attic  R-49  R-49". A membrane roof with internal
+drains and a vented attic truss roof are not the same assembly. Found by
+deepseek_no-partner_seed1.
+
+**C2b — the revision log double-numbers.** p16: "Revision 2, 5 January 2026 —
+unit 305 kitchen reconfiguration. Revision 2, 5 January 2026 — corridor light
+fixture substitution." Two distinct changes carry the same revision number.
+Found by openai_partner_seed3.
+
+**Disposition.** Not corrected. The corpus was frozen and hashed under
+amendment A1 and the pre-registration was posted before Run 2; editing packet-4
+mid-analysis would invalidate the manifest and the analysed grid. The defects
+are recorded here instead, and the consequence is stated plainly: MC-2026-04440
+is ground-truthed APPROVE, so the three Run-2 rejections of it are scored as
+wrong decisions, but at least two of those rejections cite defects that are
+real. Decision-correctness for 04440 is therefore reported with this caveat
+attached and is not presented as a clean model-error count. The A2
+rejection-grounds classification (REJECTION-GROUNDS-run2.md) is what makes the
+distinction legible: those grounds code `internal-defect`, not
+`imported-standard` or `unsupported`.
+
+**Why this is reported rather than quietly fixed.** The same mechanism that
+caught packet-1's arithmetic before the analysed run caught packet-4's
+contradictions during it. An instrument that adjudicates subject claims against
+a record will also adjudicate the record — including its author's. Both
+directions belong in the log.
+
+**Correction to an earlier fact block.** The verification note for row 6 of
+REJECTION-GROUNDS-run2.md (deepseek_partner_seed2 / MC-2026-04448) originally
+stated that packet-5 "contains NO fire-apparatus access provision." That is
+wrong: packet-5 line 116 is headed "Fire Access" and reads "An existing 26-foot
+paved fire access lane passes within 84 feet of the new building on the west
+and south sides." The row's `unsupported` classification stands, and on
+stronger grounds — the subject asserted an absence that is not an absence, and
+recharacterised an 84-ft lane-to-building distance as hydrant spacing.
