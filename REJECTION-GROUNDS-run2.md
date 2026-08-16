@@ -165,8 +165,8 @@ AGAINST THE RECORD:
 ==========================================================================
 
 SUMMARY (fill after coding)
-  internal-defect:    4 of 7
-  imported-standard:  1 of 7
+  internal-defect:    1 of 7
+  imported-standard:  4 of 7
   unsupported:        2 of 7
 
 Coded by: WG   Date: 8-15-26
